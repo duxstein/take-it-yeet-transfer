@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,12 +62,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Chaotic color scheme
+				chaos: {
+					neon1: '#ff00ff', // hot pink
+					neon2: '#00ffff', // cyan
+					neon3: '#ffff00', // yellow
+					ugly1: '#8B4513', // saddle brown
+					ugly2: '#7CFC00', // lawn green
+					error: '#FF6347', // tomato
 				}
 			},
-			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+			fontFamily: {
+				comic: ['Comic Sans MS', 'Comic Sans', 'cursive'],
 			},
 			keyframes: {
 				'accordion-down': {
@@ -84,11 +92,25 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				wiggle: {
+					'0%, 100%': { transform: 'rotate(-3deg)' },
+					'50%': { transform: 'rotate(3deg)' },
+				},
+				glitch: {
+					'0%': { transform: 'translate(0)' },
+					'20%': { transform: 'translate(-5px, 5px)' },
+					'40%': { transform: 'translate(-5px, -5px)' },
+					'60%': { transform: 'translate(5px, 5px)' },
+					'80%': { transform: 'translate(5px, -5px)' },
+					'100%': { transform: 'translate(0)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'wiggle': 'wiggle 1s ease-in-out infinite',
+				'glitch': 'glitch 0.3s ease infinite',
 			}
 		}
 	},
