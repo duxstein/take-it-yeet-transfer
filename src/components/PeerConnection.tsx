@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { QRCodeSVG } from 'qrcode.react';
+import { Link } from 'lucide-react';
 import { getRandomMessage, errorMessages, statusMessages } from '@/utils/chaoticMessages';
 import { playRandomSound } from '@/utils/soundEffects';
 import { Peer, DataConnection } from 'peerjs';
@@ -19,6 +21,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
   const [connection, setConnection] = useState<DataConnection | null>(null);
   const [status, setStatus] = useState<string>("initializing");
   const [receivedFiles, setReceivedFiles] = useState<{name: string, data: ArrayBuffer, type: string}[]>([]);
+  const [showQrCode, setShowQrCode] = useState<boolean>(false);
   
   // Initialize peer connection
   useEffect(() => {
@@ -256,6 +259,29 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
     });
   };
   
+  const toggleQrCode = () => {
+    setShowQrCode(prev => !prev);
+  };
+  
+  const handlePasteId = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setRemotePeerId(text);
+      toast({
+        title: "ID Pasted!",
+        description: "Connection ID pasted from clipboard",
+      });
+    } catch (err) {
+      console.error("Failed to read clipboard:", err);
+      toast({
+        title: "Paste failed!",
+        description: getRandomMessage(errorMessages),
+        variant: "destructive",
+      });
+      playRandomSound();
+    }
+  };
+  
   const getStatusEmoji = () => {
     switch(status) {
       case 'initializing': return '🤔';
@@ -273,30 +299,64 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
       <div className="bg-white p-4 rounded-lg border-2 border-chaos-neon2 chaotic-shadow">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-comic font-bold text-chaos-neon1">Your Connection ID:</h3>
-          <Button 
-            onClick={copyPeerId} 
-            className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black"
-            disabled={!peerId}
-          >
-            Copy ID
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={toggleQrCode} 
+              className="bg-chaos-neon1 hover:bg-chaos-neon1/80 text-black"
+              disabled={!peerId}
+              title={showQrCode ? "Hide QR Code" : "Show QR Code"}
+            >
+              <Link className="h-4 w-4 mr-1" /> 
+              {showQrCode ? "Hide" : "QR"}
+            </Button>
+            <Button 
+              onClick={copyPeerId} 
+              className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black"
+              disabled={!peerId}
+            >
+              Copy ID
+            </Button>
+          </div>
         </div>
         <div className="p-2 bg-gray-100 rounded flex items-center justify-between">
           <code className="font-mono text-sm break-all">{peerId || "Generating..."}</code>
           <span className="ml-2 text-2xl">{getStatusEmoji()}</span>
         </div>
+        
+        {showQrCode && peerId && (
+          <div className="mt-4 p-4 bg-white border-2 border-chaos-neon1 rounded-lg flex flex-col items-center">
+            <p className="text-sm text-gray-500 mb-2">Scan to connect:</p>
+            <QRCodeSVG 
+              value={peerId} 
+              size={180} 
+              bgColor={"#ffffff"} 
+              fgColor={"#000000"} 
+              level={"L"} 
+              includeMargin={false}
+            />
+          </div>
+        )}
       </div>
 
-      <div className="flex gap-3 items-center">
-        <Input 
-          placeholder="Enter friend's ID" 
-          value={remotePeerId} 
-          onChange={(e) => setRemotePeerId(e.target.value)}
-          className="border-chaos-neon1"
-        />
+      <div className="flex flex-col sm:flex-row gap-3 items-center">
+        <div className="flex w-full gap-2">
+          <Input 
+            placeholder="Enter friend's ID" 
+            value={remotePeerId} 
+            onChange={(e) => setRemotePeerId(e.target.value)}
+            className="border-chaos-neon1"
+          />
+          <Button
+            onClick={handlePasteId}
+            className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black shrink-0"
+            title="Paste ID from clipboard"
+          >
+            Paste
+          </Button>
+        </div>
         <Button 
           onClick={connectToPeer} 
-          className="bg-chaos-neon1 hover:bg-chaos-neon1/80"
+          className="bg-chaos-neon1 hover:bg-chaos-neon1/80 w-full sm:w-auto"
           disabled={!remotePeerId || status === 'connecting' || !!connection}
         >
           Connect
