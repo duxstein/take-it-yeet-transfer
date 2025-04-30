@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,23 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
   const [status, setStatus] = useState<string>("initializing");
   const [receivedFiles, setReceivedFiles] = useState<{name: string, data: ArrayBuffer, type: string}[]>([]);
   const [showQrCode, setShowQrCode] = useState<boolean>(false);
+  
+  // Check if we should connect to someone based on URL
+  useEffect(() => {
+    // Extract connection ID from URL if present
+    const url = new URL(window.location.href);
+    const connectionParam = url.searchParams.get('connect');
+    
+    if (connectionParam) {
+      setRemotePeerId(connectionParam);
+      // Wait for peer to initialize before connecting
+      if (peer && peer.id && connectionParam) {
+        connectToPeer(connectionParam);
+        // Clear the URL parameter after connection attempt
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [peerId]); // Run when peer ID is ready
   
   // Initialize peer connection
   useEffect(() => {
@@ -119,8 +135,8 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
     });
   };
   
-  const connectToPeer = () => {
-    if (!peer || !remotePeerId) return;
+  const connectToPeer = (idToConnect = remotePeerId) => {
+    if (!peer || !idToConnect) return;
     
     // Random chance for fake connection error
     if (Math.random() > 0.9) {
@@ -134,7 +150,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
     }
     
     try {
-      const conn = peer.connect(remotePeerId);
+      const conn = peer.connect(idToConnect);
       setConnection(conn);
       setStatus("connecting");
       
@@ -251,11 +267,19 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
     });
   };
   
+  // Generate shareable connection URL
+  const getConnectionUrl = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('connect', peerId);
+    return url.toString();
+  };
+  
   const copyPeerId = () => {
-    navigator.clipboard.writeText(peerId);
+    const connectionUrl = getConnectionUrl();
+    navigator.clipboard.writeText(connectionUrl);
     toast({
-      title: "ID Copied!",
-      description: "Your peer ID was copied to clipboard",
+      title: "URL Copied!",
+      description: "Connection URL was copied to clipboard",
     });
   };
   
@@ -266,11 +290,32 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
   const handlePasteId = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      setRemotePeerId(text);
-      toast({
-        title: "ID Pasted!",
-        description: "Connection ID pasted from clipboard",
-      });
+      // Check if it's a URL with connection parameter
+      try {
+        const url = new URL(text);
+        const connectionParam = url.searchParams.get('connect');
+        if (connectionParam) {
+          setRemotePeerId(connectionParam);
+          toast({
+            title: "ID Extracted!",
+            description: "Connection ID extracted from URL",
+          });
+        } else {
+          // If it's just an ID, use it directly
+          setRemotePeerId(text);
+          toast({
+            title: "ID Pasted!",
+            description: "Connection ID pasted from clipboard",
+          });
+        }
+      } catch (e) {
+        // Not a URL, just use as ID directly
+        setRemotePeerId(text);
+        toast({
+          title: "ID Pasted!",
+          description: "Connection ID pasted from clipboard",
+        });
+      }
     } catch (err) {
       console.error("Failed to read clipboard:", err);
       toast({
@@ -298,7 +343,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
     <div className="space-y-6">
       <div className="bg-white p-4 rounded-lg border-2 border-chaos-neon2 chaotic-shadow">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-comic font-bold text-chaos-neon1">Your Connection ID:</h3>
+          <h3 className="text-lg font-comic font-bold text-chaos-neon1">Your Connection URL:</h3>
           <div className="flex gap-2">
             <Button 
               onClick={toggleQrCode} 
@@ -314,12 +359,14 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
               className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black"
               disabled={!peerId}
             >
-              Copy ID
+              Copy URL
             </Button>
           </div>
         </div>
         <div className="p-2 bg-gray-100 rounded flex items-center justify-between">
-          <code className="font-mono text-sm break-all">{peerId || "Generating..."}</code>
+          <code className="font-mono text-sm break-all">
+            {peerId ? getConnectionUrl().substring(0, 40) + '...' : "Generating..."}
+          </code>
           <span className="ml-2 text-2xl">{getStatusEmoji()}</span>
         </div>
         
@@ -327,7 +374,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
           <div className="mt-4 p-4 bg-white border-2 border-chaos-neon1 rounded-lg flex flex-col items-center">
             <p className="text-sm text-gray-500 mb-2">Scan to connect:</p>
             <QRCodeSVG 
-              value={peerId} 
+              value={getConnectionUrl()} 
               size={180} 
               bgColor={"#ffffff"} 
               fgColor={"#000000"} 
@@ -341,7 +388,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
       <div className="flex flex-col sm:flex-row gap-3 items-center">
         <div className="flex w-full gap-2">
           <Input 
-            placeholder="Enter friend's ID" 
+            placeholder="Enter friend's ID or URL" 
             value={remotePeerId} 
             onChange={(e) => setRemotePeerId(e.target.value)}
             className="border-chaos-neon1"
@@ -355,7 +402,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
           </Button>
         </div>
         <Button 
-          onClick={connectToPeer} 
+          onClick={() => connectToPeer()}
           className="bg-chaos-neon1 hover:bg-chaos-neon1/80 w-full sm:w-auto"
           disabled={!remotePeerId || status === 'connecting' || !!connection}
         >
