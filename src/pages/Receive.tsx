@@ -17,6 +17,10 @@ const Receive = () => {
   useEffect(() => {
     if (connectionId) {
       setIsConnecting(true);
+      
+      // Log the connection ID for debugging
+      console.log("Attempting to connect with ID:", connectionId);
+      
       toast({
         title: "Auto-connecting...",
         description: getRandomMessage(statusMessages),
@@ -53,19 +57,17 @@ const Receive = () => {
             </h2>
             <p className="text-gray-600">
               {connectionId 
-                ? "Connecting to sender automatically..." 
+                ? `Connecting to sender ID: ${connectionId}...` 
                 : "No connection ID provided. Add ?connect=ID to the URL."}
             </p>
           </div>
           
-          {connectionId && (
-            <PeerConnection 
-              files={files} 
-              onReset={handleReset}
-              initialConnectionId={connectionId}
-              receiveMode={true}
-            />
-          )}
+          <PeerConnection 
+            files={files} 
+            onReset={handleReset}
+            initialConnectionId={connectionId || ''}
+            receiveMode={true}
+          />
           
           <div className="mt-8">
             <Button 
