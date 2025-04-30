@@ -11,33 +11,23 @@ import { Peer, DataConnection } from 'peerjs';
 interface PeerConnectionProps {
   files: File[];
   onReset: () => void;
+  initialConnectionId?: string;
+  receiveMode?: boolean;
 }
 
-const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
+const PeerConnection: React.FC<PeerConnectionProps> = ({ 
+  files, 
+  onReset, 
+  initialConnectionId = '', 
+  receiveMode = false 
+}) => {
   const [peer, setPeer] = useState<Peer | null>(null);
   const [peerId, setPeerId] = useState<string>("");
-  const [remotePeerId, setRemotePeerId] = useState<string>("");
+  const [remotePeerId, setRemotePeerId] = useState<string>(initialConnectionId);
   const [connection, setConnection] = useState<DataConnection | null>(null);
   const [status, setStatus] = useState<string>("initializing");
   const [receivedFiles, setReceivedFiles] = useState<{name: string, data: ArrayBuffer, type: string}[]>([]);
   const [showQrCode, setShowQrCode] = useState<boolean>(false);
-  
-  // Check if we should connect to someone based on URL
-  useEffect(() => {
-    // Extract connection ID from URL if present
-    const url = new URL(window.location.href);
-    const connectionParam = url.searchParams.get('connect');
-    
-    if (connectionParam) {
-      setRemotePeerId(connectionParam);
-      // Wait for peer to initialize before connecting
-      if (peer && peer.id && connectionParam) {
-        connectToPeer(connectionParam);
-        // Clear the URL parameter after connection attempt
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    }
-  }, [peerId]); // Run when peer ID is ready
   
   // Initialize peer connection
   useEffect(() => {
@@ -51,6 +41,11 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
       // Sometimes show silly status
       if (Math.random() > 0.7) {
         setStatus(getRandomMessage(statusMessages));
+      }
+      
+      // If in receive mode and we have an initial connection ID, connect automatically
+      if (receiveMode && initialConnectionId && id) {
+        connectToPeer(initialConnectionId);
       }
     });
     
@@ -81,7 +76,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
     return () => {
       newPeer.destroy();
     };
-  }, []);
+  }, [initialConnectionId, receiveMode]);
   
   const setupConnectionHandlers = (conn: DataConnection) => {
     conn.on('data', (data: any) => {
@@ -270,8 +265,15 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
   // Generate shareable connection URL
   const getConnectionUrl = () => {
     const url = new URL(window.location.href);
-    url.searchParams.set('connect', peerId);
-    return url.toString();
+    // If we're already on the receive page, just update the connect param
+    if (url.pathname === "/receive") {
+      url.searchParams.set('connect', peerId);
+      return url.toString();
+    }
+    // Otherwise create a URL to the receive page
+    const receiveUrl = new URL("/receive", window.location.origin);
+    receiveUrl.searchParams.set('connect', peerId);
+    return receiveUrl.toString();
   };
   
   const copyPeerId = () => {
@@ -341,76 +343,89 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({ files, onReset }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-4 rounded-lg border-2 border-chaos-neon2 chaotic-shadow">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-comic font-bold text-chaos-neon1">Your Connection URL:</h3>
-          <div className="flex gap-2">
-            <Button 
-              onClick={toggleQrCode} 
-              className="bg-chaos-neon1 hover:bg-chaos-neon1/80 text-black"
-              disabled={!peerId}
-              title={showQrCode ? "Hide QR Code" : "Show QR Code"}
-            >
-              <Link className="h-4 w-4 mr-1" /> 
-              {showQrCode ? "Hide" : "QR"}
-            </Button>
-            <Button 
-              onClick={copyPeerId} 
-              className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black"
-              disabled={!peerId}
-            >
-              Copy URL
-            </Button>
+      {!receiveMode && (
+        <div className="bg-white p-4 rounded-lg border-2 border-chaos-neon2 chaotic-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-comic font-bold text-chaos-neon1">Your Connection URL:</h3>
+            <div className="flex gap-2">
+              <Button 
+                onClick={toggleQrCode} 
+                className="bg-chaos-neon1 hover:bg-chaos-neon1/80 text-black"
+                disabled={!peerId}
+                title={showQrCode ? "Hide QR Code" : "Show QR Code"}
+              >
+                <Link className="h-4 w-4 mr-1" /> 
+                {showQrCode ? "Hide" : "QR"}
+              </Button>
+              <Button 
+                onClick={copyPeerId} 
+                className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black"
+                disabled={!peerId}
+              >
+                Copy URL
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="p-2 bg-gray-100 rounded flex items-center justify-between">
-          <code className="font-mono text-sm break-all">
-            {peerId ? getConnectionUrl().substring(0, 40) + '...' : "Generating..."}
-          </code>
-          <span className="ml-2 text-2xl">{getStatusEmoji()}</span>
-        </div>
-        
-        {showQrCode && peerId && (
-          <div className="mt-4 p-4 bg-white border-2 border-chaos-neon1 rounded-lg flex flex-col items-center">
-            <p className="text-sm text-gray-500 mb-2">Scan to connect:</p>
-            <QRCodeSVG 
-              value={getConnectionUrl()} 
-              size={180} 
-              bgColor={"#ffffff"} 
-              fgColor={"#000000"} 
-              level={"L"} 
-              includeMargin={false}
-            />
+          <div className="p-2 bg-gray-100 rounded flex items-center justify-between">
+            <code className="font-mono text-sm break-all">
+              {peerId ? getConnectionUrl().substring(0, 40) + '...' : "Generating..."}
+            </code>
+            <span className="ml-2 text-2xl">{getStatusEmoji()}</span>
           </div>
-        )}
-      </div>
+          
+          {showQrCode && peerId && (
+            <div className="mt-4 p-4 bg-white border-2 border-chaos-neon1 rounded-lg flex flex-col items-center">
+              <p className="text-sm text-gray-500 mb-2">Scan to connect:</p>
+              <QRCodeSVG 
+                value={getConnectionUrl()} 
+                size={180} 
+                bgColor={"#ffffff"} 
+                fgColor={"#000000"} 
+                level={"L"} 
+                includeMargin={false}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
-      <div className="flex flex-col sm:flex-row gap-3 items-center">
-        <div className="flex w-full gap-2">
-          <Input 
-            placeholder="Enter friend's ID or URL" 
-            value={remotePeerId} 
-            onChange={(e) => setRemotePeerId(e.target.value)}
-            className="border-chaos-neon1"
-          />
-          <Button
-            onClick={handlePasteId}
-            className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black shrink-0"
-            title="Paste ID from clipboard"
+      {!connection && !receiveMode && (
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <div className="flex w-full gap-2">
+            <Input 
+              placeholder="Enter friend's ID or URL" 
+              value={remotePeerId} 
+              onChange={(e) => setRemotePeerId(e.target.value)}
+              className="border-chaos-neon1"
+            />
+            <Button
+              onClick={handlePasteId}
+              className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black shrink-0"
+              title="Paste ID from clipboard"
+            >
+              Paste
+            </Button>
+          </div>
+          <Button 
+            onClick={() => connectToPeer()}
+            className="bg-chaos-neon1 hover:bg-chaos-neon1/80 w-full sm:w-auto"
+            disabled={!remotePeerId || status === 'connecting' || !!connection}
           >
-            Paste
+            Connect
           </Button>
         </div>
-        <Button 
-          onClick={() => connectToPeer()}
-          className="bg-chaos-neon1 hover:bg-chaos-neon1/80 w-full sm:w-auto"
-          disabled={!remotePeerId || status === 'connecting' || !!connection}
-        >
-          Connect
-        </Button>
-      </div>
+      )}
+      
+      {receiveMode && status === "ready" && !connection && (
+        <div className="flex justify-center">
+          <div className="animate-pulse p-6 text-center">
+            <p className="text-xl font-comic font-bold text-chaos-neon1">Waiting for connection...</p>
+            <p className="text-gray-500 mt-2">{getStatusEmoji()}</p>
+          </div>
+        </div>
+      )}
 
-      {status === 'connected' && files.length > 0 && (
+      {status === 'connected' && files.length > 0 && !receiveMode && (
         <Button 
           onClick={sendFiles} 
           className="w-full p-6 text-3xl font-comic font-bold bg-chaos-neon3 hover:bg-chaos-neon3/80 text-black animate-wiggle chaotic-shadow"
