@@ -3,6 +3,7 @@ import React, { useState, useRef, DragEvent } from 'react';
 import { getRandomMessage, errorMessages, statusMessages } from '@/utils/chaoticMessages';
 import { playRandomSound } from '@/utils/soundEffects';
 import { toast } from '@/components/ui/use-toast';
+import { Laugh } from 'lucide-react';
 
 interface FileDropProps {
   onFilesAdded: (files: File[]) => void;
@@ -11,7 +12,22 @@ interface FileDropProps {
 
 const FileDrop: React.FC<FileDropProps> = ({ onFilesAdded, disabled }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [hoverCount, setHoverCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Easter egg messages that appear when you hover multiple times
+  const hoverMessages = [
+    "Still hovering, huh?",
+    "You seem indecisive...",
+    "Just drop the file already!",
+    "I'm getting impatient now...",
+    "Are we doing this or what?",
+    "Is this some kind of game to you?",
+    "Fine, I'll wait. I've got all day.",
+    "This is awkward now.",
+    "Seriously?",
+    "*Dramatic sigh*"
+  ];
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -35,12 +51,22 @@ const FileDrop: React.FC<FileDropProps> = ({ onFilesAdded, disabled }) => {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const fileArray = Array.from(e.dataTransfer.files);
       
-      // Sometimes randomly "reject" files for chaos
+      // 20% chance to "reject" files for chaos
       if (Math.random() > 0.8) {
         toast({
           title: "File rejected",
           description: getRandomMessage(errorMessages),
           variant: "destructive",
+        });
+        playRandomSound();
+        return;
+      }
+      
+      // 10% chance to fake accept but do nothing
+      if (Math.random() > 0.9) {
+        toast({
+          title: "Files accepted... or were they?",
+          description: "Just kidding! Try again.",
         });
         playRandomSound();
         return;
@@ -59,7 +85,7 @@ const FileDrop: React.FC<FileDropProps> = ({ onFilesAdded, disabled }) => {
     
     const fileArray = Array.from(e.target.files);
     
-    // Sometimes randomly "reject" files for chaos
+    // 20% chance to "reject" files for chaos
     if (Math.random() > 0.8) {
       toast({
         title: "File rejected",
@@ -82,6 +108,15 @@ const FileDrop: React.FC<FileDropProps> = ({ onFilesAdded, disabled }) => {
       fileInputRef.current.click();
     }
   };
+  
+  const handleMouseEnter = () => {
+    if (hoverCount < hoverMessages.length && Math.random() > 0.7) {
+      toast({
+        description: hoverMessages[hoverCount],
+      });
+      setHoverCount(prev => prev + 1);
+    }
+  };
 
   return (
     <div
@@ -92,6 +127,7 @@ const FileDrop: React.FC<FileDropProps> = ({ onFilesAdded, disabled }) => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
     >
       <div className="text-center">
         <input
@@ -110,7 +146,13 @@ const FileDrop: React.FC<FileDropProps> = ({ onFilesAdded, disabled }) => {
         </p>
         
         <div className="mt-6 animate-bounce">
-          <span className="text-4xl">⬇️</span>
+          <Laugh className="w-12 h-12 mx-auto text-chaos-neon2" />
+        </div>
+        
+        <div className="text-xs text-gray-400 mt-4 italic">
+          {Math.random() > 0.5 ? 
+            "90% chance your file will make it somewhere" : 
+            "Guarantee: Files will definitely do something"}
         </div>
       </div>
     </div>

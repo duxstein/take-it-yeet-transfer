@@ -17,7 +17,19 @@ export const statusMessages = [
   "Progress: maybe halfway? who knows",
   "Calculating time remaining... like, forever?",
   "Transfer speed: yes",
-  "Internet doing internet things with your file"
+  "Internet doing internet things with your file",
+  "Uploading to government spy servers...",
+  "Converting file to emoji and back",
+  "Asking digital pigeons to carry your data",
+  "File transfer powered by hamster wheels",
+  "Bribing internet gnomes to move your file",
+  "Your data is taking a coffee break",
+  "Assembling a file transfer interpretive dance",
+  "Sacrificing bytes to the internet gods",
+  "Convincing your file it wants to travel",
+  "Squeezing data through tiny internet tubes",
+  "Translating your file to Klingon and back",
+  "Error 404: Progress bar not found"
 ];
 
 export const errorMessages = [
@@ -35,9 +47,42 @@ export const errorMessages = [
   "File transfer failed: Mercury is in retrograde",
   "Looks like your data got lost in the sauce",
   "Server response: 'I don't feel like it'",
-  "Your file was eaten by digital gremlins"
+  "Your file was eaten by digital gremlins",
+  "Error: Computer feeling sassy today",
+  "Your file ran away to join the cloud circus",
+  "Transfer failed: Your file has commitment issues",
+  "Error 418: I'm a teapot, not a file server",
+  "File rejected for being too boring",
+  "Connection lost: Blame your neighbor's WiFi",
+  "Data packets got stuck in digital traffic",
+  "Transfer failed: Your file is too chunky",
+  "Error: Server having existential crisis",
+  "Files vanished into the digital Bermuda Triangle"
 ];
 
 export const getRandomMessage = (array: string[]): string => {
   return array[Math.floor(Math.random() * array.length)];
 };
+
+export const funnyLoadingPhrases = [
+  "Reticulating splines...",
+  "Generating witty dialog...",
+  "Swapping time and space...",
+  "Spinning violently around the y-axis...",
+  "Tokenizing real life...",
+  "Bending the spoon...",
+  "Filtering morale...",
+  "Don't think of purple hippos...",
+  "We need a new fuse...",
+  "Have a good day.",
+  "Upgrading Windows, your PC will restart several times...",
+  "640K ought to be enough for anybody",
+  "The architects are still drafting",
+  "The bits are breeding",
+  "Would you prefer chicken, steak, or tofu?",
+  "Counting backwards from infinity",
+  "The Elders of the Internet would never stand for it",
+  "Dividing by zero...",
+  "Spawn more Overlord!",
+  "If I'm not back in five minutes, just wait longer."
+];
