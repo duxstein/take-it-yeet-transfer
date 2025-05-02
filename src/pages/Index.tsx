@@ -6,7 +6,7 @@ import { getRandomMessage, statusMessages, funnyLoadingPhrases } from '@/utils/c
 import { playRandomSound } from '@/utils/soundEffects';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
-import { Confetti, Laugh, PartyPopper, Dice, Smile } from 'lucide-react';
+import { Laugh, PartyPopper, Smile, Sparkles, Dices } from 'lucide-react';
 
 const Index = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -134,7 +134,7 @@ const Index = () => {
           {showInstructions && (
             <div className="mt-8 p-4 border-2 border-dashed border-gray-300 rounded-lg">
               <h2 className="text-lg font-comic font-bold chaotic-rotate flex items-center">
-                <Dice className="mr-2 text-chaos-neon1" /> 
+                <Dices className="mr-2 text-chaos-neon1" /> 
                 How it works (kinda):
               </h2>
               <ol className="list-decimal pl-5 mt-2 space-y-1 text-gray-600">
