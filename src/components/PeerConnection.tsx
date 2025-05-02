@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Link } from 'lucide-react';
 import { getRandomMessage, errorMessages, statusMessages } from '@/utils/chaoticMessages';
 import { playRandomSound } from '@/utils/soundEffects';
 import { Peer, DataConnection } from 'peerjs';
+import { generateShortUrl, storeIdMapping } from '@/utils/urlShortener';
 
 interface PeerConnectionProps {
   files: File[];
@@ -291,12 +291,18 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
     return receiveUrl.toString();
   };
   
-  const copyPeerId = () => {
-    const connectionUrl = getConnectionUrl();
-    navigator.clipboard.writeText(connectionUrl);
+  const getShortUrl = () => {
+    if (!peerId) return '';
+    storeIdMapping(peerId);
+    return generateShortUrl(peerId);
+  };
+  
+  const copyPeerId = (shortUrl = false) => {
+    const urlToCopy = shortUrl ? getShortUrl() : getConnectionUrl();
+    navigator.clipboard.writeText(urlToCopy);
     toast({
       title: "URL Copied!",
-      description: "Connection URL was copied to clipboard",
+      description: shortUrl ? "Shortened URL copied to clipboard" : "Connection URL copied to clipboard",
     });
   };
   
@@ -373,11 +379,18 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
                 {showQrCode ? "Hide" : "QR"}
               </Button>
               <Button 
-                onClick={copyPeerId} 
+                onClick={() => copyPeerId(false)} 
                 className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black"
                 disabled={!peerId}
               >
                 Copy URL
+              </Button>
+              <Button 
+                onClick={() => copyPeerId(true)} 
+                className="bg-chaos-neon3 hover:bg-chaos-neon3/80 text-black"
+                disabled={!peerId}
+              >
+                Copy Short
               </Button>
             </div>
           </div>
@@ -387,6 +400,15 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
             </code>
             <span className="ml-2 text-2xl">{getStatusEmoji()}</span>
           </div>
+          
+          {peerId && (
+            <div className="mt-2 p-2 bg-gray-100 rounded flex items-center justify-between">
+              <code className="font-mono text-sm">
+                Short URL: {peerId ? getShortUrl() : "Generating..."}
+              </code>
+              <span className="ml-2 text-lg">🔗</span>
+            </div>
+          )}
           
           {showQrCode && peerId && (
             <div className="mt-4 p-4 bg-white border-2 border-chaos-neon1 rounded-lg flex flex-col items-center">
