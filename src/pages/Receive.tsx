@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import PeerConnection from '@/components/PeerConnection';
 import { getRandomMessage, statusMessages, funnyLoadingPhrases } from '@/utils/chaoticMessages';
-import { Laugh, PartyPopper, Smile } from 'lucide-react';
+import { Laugh, PartyPopper, Smile, Zap } from 'lucide-react';
 
 const Receive = () => {
   const [searchParams] = useSearchParams();
@@ -15,14 +15,14 @@ const Receive = () => {
   
   // Random tips that appear
   const tips = [
-    "Try standing on your head while files transfer for better luck",
-    "If transfer fails, try sacrificing a rubber duck to the coding gods",
-    "For best results, perform the file transfer dance around your device",
+    "Files arrive so fast you might get whiplash",
+    "Our servers run on espresso and pure chaos",
+    "No electrons were harmed during this file transfer",
     "9 out of 10 digital hamsters recommend this file transfer method",
-    "Your file is being escorted by elite pixel bodyguards",
-    "Files transfer faster if you squint at the screen really hard",
-    "Secret tip: Yelling at your computer doesn't actually help",
-    "If all else fails, try turning it off and... nope, just off",
+    "Your file is being escorted by elite pixel ninjas",
+    "Files transfer faster if you do jazz hands",
+    "Our speed is powered by quantum entanglement... maybe",
+    "Transfer complete before you finish reading this tip",
   ];
   
   // Extract connection ID from URL
@@ -63,36 +63,36 @@ const Receive = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-cyan-100 to-yellow-100 py-8 px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-emerald-100 to-amber-100 py-8 px-4 relative overflow-hidden">
       {/* Fun background elements */}
-      <div className="absolute top-40 left-10 text-6xl animate-pulse opacity-30">📥</div>
+      <div className="absolute top-40 left-10 text-6xl animate-pulse opacity-30">⚡</div>
       <div className="absolute bottom-40 right-10 text-6xl animate-bounce opacity-30">📂</div>
-      <div className="absolute top-2/3 left-1/3 text-7xl animate-spin-slow opacity-20">💾</div>
+      <div className="absolute top-2/3 left-1/3 text-7xl animate-spin-slow opacity-20">💫</div>
       
       <div className="max-w-2xl mx-auto">
         <header className="text-center mb-12 relative">
-          <h1 className="text-5xl font-comic font-bold bg-clip-text text-transparent bg-gradient-to-r from-chaos-neon1 to-chaos-neon2 chaotic-rotate mb-4">
-            UhhJustTakeIt
+          <h1 className="text-5xl font-comic font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-emerald-500 chaotic-rotate mb-4 flex items-center justify-center">
+            <Zap className="mr-2 h-8 w-8" /> UhhJustTakeIt
           </h1>
           <p className="text-lg text-gray-600 chaotic-rotate-reverse">
-            Receiving Files Mode <span className="text-xs">(we hope)</span>
+            Receiving Files at <span className="text-indigo-600 font-bold">HYPER-SPEED</span>
           </p>
           
           <Button
             onClick={handleFunnyMessage}
-            className="mt-2 bg-transparent hover:bg-transparent text-gray-500 hover:text-chaos-neon1 px-0"
+            className="mt-2 bg-transparent hover:bg-transparent text-gray-500 hover:text-indigo-600 px-0"
             variant="ghost"
           >
             <Smile className="w-4 h-4 mr-1" />
-            <span className="text-xs underline">Helpful Tip</span>
+            <span className="text-xs underline">Speed Tip</span>
           </Button>
         </header>
         
-        <div className="bg-white rounded-xl p-6 shadow-xl chaotic-shadow">
+        <div className="bg-white rounded-xl p-6 shadow-neon">
           <div className="mb-6 text-center">
-            <h2 className="text-xl font-comic font-bold text-chaos-neon1 mb-2 flex items-center justify-center">
+            <h2 className="text-xl font-comic font-bold text-indigo-600 mb-2 flex items-center justify-center">
               <PartyPopper className="mr-2" />
-              Ready to receive files
+              Ready to receive files at light speed
             </h2>
             <p className="text-gray-600">
               {connectionId 
@@ -115,7 +115,7 @@ const Receive = () => {
             <Button 
               onClick={() => window.location.href = '/'} 
               variant="outline" 
-              className="w-full group"
+              className="w-full group border-indigo-300 text-indigo-600 hover:bg-indigo-50"
             >
               <Laugh className="mr-2 group-hover:rotate-12" />
               Go to Sending Mode
@@ -127,7 +127,7 @@ const Receive = () => {
           <p>
             Made with <span className="text-red-500">♥</span> and questionable design choices
             <br/>
-            <span className="text-xs">File reception success rate: yes%</span>
+            <span className="text-xs">File reception success rate: SUPER FAST%</span>
           </p>
         </footer>
       </div>

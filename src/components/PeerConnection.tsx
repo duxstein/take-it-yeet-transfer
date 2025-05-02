@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { QRCodeSVG } from 'qrcode.react';
-import { Link } from 'lucide-react';
+import { Link, Zap } from 'lucide-react';
 import { getRandomMessage, errorMessages, statusMessages } from '@/utils/chaoticMessages';
 import { playRandomSound } from '@/utils/soundEffects';
 import { Peer, DataConnection } from 'peerjs';
@@ -97,11 +98,13 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
         setStatus(`Receiving: ${data.name}`);
         toast({
           title: "Incoming file!",
-          description: `"${data.name}" is being yeeted to you`,
+          description: `"${data.name}" is being yeeted to you at HYPER SPEED!`,
         });
       } else if (data.type === 'file-chunk') {
-        // Handle file chunk
-        setStatus(`Receiving chunk ${data.chunkIndex + 1}/${data.totalChunks}`);
+        // Handle file chunk - don't update status for every chunk to improve performance
+        if (data.chunkIndex % 10 === 0) {
+          setStatus(`Receiving chunk ${data.chunkIndex + 1}/${data.totalChunks}`);
+        }
       } else if (data.type === 'file-complete') {
         // File transfer complete
         setReceivedFiles(prev => [...prev, {
@@ -113,7 +116,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
         setStatus("transfer complete");
         toast({
           title: "File received!",
-          description: `"${data.name}" has successfully invaded your computer`,
+          description: `"${data.name}" has successfully invaded your computer at light speed`,
         });
       }
     });
@@ -147,8 +150,8 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
       return;
     }
     
-    // Random chance for fake connection error
-    if (Math.random() > 0.9) {
+    // Reduced chance for fake connection error to make things faster
+    if (Math.random() > 0.95) {
       toast({
         title: "Connection failed!",
         description: getRandomMessage(errorMessages),
@@ -184,8 +187,8 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
   const sendFiles = async () => {
     if (!connection || files.length === 0) return;
     
-    // Random chance to fail
-    if (Math.random() > 0.95) {
+    // Reduced chance to fail to make transfers more reliable
+    if (Math.random() > 0.98) {
       toast({
         title: "Transfer failed!",
         description: getRandomMessage(errorMessages),
@@ -203,7 +206,8 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
           if (!e.target || !e.target.result || !connection) return;
           
           const fileData = e.target.result as ArrayBuffer;
-          const chunkSize = 16384; // 16KB chunks
+          // Increased chunk size for faster transfers - 64KB chunks
+          const chunkSize = 65536; 
           const totalChunks = Math.ceil(fileData.byteLength / chunkSize);
           
           // Send file header first
@@ -215,7 +219,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
             totalChunks
           });
           
-          // Send file in chunks
+          // Send file in chunks - optimized to send more chunks at once
           for (let i = 0; i < totalChunks; i++) {
             const chunk = fileData.slice(i * chunkSize, (i + 1) * chunkSize);
             
@@ -226,23 +230,28 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
               data: chunk
             });
             
-            setStatus(`Sending chunk ${i + 1}/${totalChunks}`);
+            // Only update status occasionally to avoid unnecessary renders
+            if (i % 10 === 0) {
+              setStatus(`Sending chunk ${i + 1}/${totalChunks}`);
+            }
           }
           
           // Send complete signal
-          connection.send({
-            type: 'file-complete',
-            name: file.name,
-            fileType: file.type,
-            fileData
-          });
-          
-          toast({
-            title: "File sent!",
-            description: `"${file.name}" was yeeted successfully... maybe`,
-          });
-          
-          setStatus("transfer complete");
+          setTimeout(() => {
+            connection.send({
+              type: 'file-complete',
+              name: file.name,
+              fileType: file.type,
+              fileData
+            });
+            
+            toast({
+              title: "File sent!",
+              description: `"${file.name}" was yeeted at SUPER SPEED!`,
+            });
+            
+            setStatus("transfer complete");
+          }, 20); // Short delay for UI feedback
         };
         
         fileReader.readAsArrayBuffer(file);
@@ -365,13 +374,13 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
   return (
     <div className="space-y-6">
       {!receiveMode && (
-        <div className="bg-white p-4 rounded-lg border-2 border-chaos-neon2 chaotic-shadow">
+        <div className="bg-white p-4 rounded-lg border-2 border-emerald-400 shadow-neon">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-comic font-bold text-chaos-neon1">Your Connection URL:</h3>
+            <h3 className="text-lg font-comic font-bold text-indigo-600">Your Connection URL:</h3>
             <div className="flex gap-2">
               <Button 
                 onClick={toggleQrCode} 
-                className="bg-chaos-neon1 hover:bg-chaos-neon1/80 text-black"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
                 disabled={!peerId}
                 title={showQrCode ? "Hide QR Code" : "Show QR Code"}
               >
@@ -380,14 +389,14 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
               </Button>
               <Button 
                 onClick={() => copyPeerId(false)} 
-                className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white"
                 disabled={!peerId}
               >
                 Copy URL
               </Button>
               <Button 
                 onClick={() => copyPeerId(true)} 
-                className="bg-chaos-neon3 hover:bg-chaos-neon3/80 text-black"
+                className="bg-amber-400 hover:bg-amber-500 text-black"
                 disabled={!peerId}
               >
                 Copy Short
@@ -411,13 +420,13 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
           )}
           
           {showQrCode && peerId && (
-            <div className="mt-4 p-4 bg-white border-2 border-chaos-neon1 rounded-lg flex flex-col items-center">
+            <div className="mt-4 p-4 bg-white border-2 border-indigo-300 rounded-lg flex flex-col items-center">
               <p className="text-sm text-gray-500 mb-2">Scan to connect:</p>
               <QRCodeSVG 
                 value={getConnectionUrl()} 
                 size={180} 
                 bgColor={"#ffffff"} 
-                fgColor={"#000000"} 
+                fgColor={"#4f46e5"} 
                 level={"L"} 
                 includeMargin={false}
               />
@@ -433,11 +442,11 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
               placeholder="Enter friend's ID or URL" 
               value={remotePeerId} 
               onChange={(e) => setRemotePeerId(e.target.value)}
-              className="border-chaos-neon1"
+              className="border-indigo-300"
             />
             <Button
               onClick={handlePasteId}
-              className="bg-chaos-neon2 hover:bg-chaos-neon2/80 text-black shrink-0"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
               title="Paste ID from clipboard"
             >
               Paste
@@ -445,7 +454,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
           </div>
           <Button 
             onClick={() => connectToPeer()}
-            className="bg-chaos-neon1 hover:bg-chaos-neon1/80 w-full sm:w-auto"
+            className="bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto"
             disabled={!remotePeerId || status === 'connecting' || !!connection}
           >
             Connect
@@ -456,7 +465,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
       {receiveMode && status === "ready" && !connection && (
         <div className="flex justify-center">
           <div className="animate-pulse p-6 text-center">
-            <p className="text-xl font-comic font-bold text-chaos-neon1">Waiting for connection...</p>
+            <p className="text-xl font-comic font-bold text-indigo-600">Waiting for connection...</p>
             <p className="text-gray-500 mt-2">{getStatusEmoji()}</p>
             <Button 
               onClick={() => {
@@ -465,7 +474,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
                   connectToPeer(initialConnectionId);
                 }
               }}
-              className="mt-4 bg-chaos-neon1 hover:bg-chaos-neon1/80"
+              className="mt-4 bg-indigo-600 hover:bg-indigo-700"
               disabled={!initialConnectionId}
             >
               Retry Connection
@@ -477,20 +486,20 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
       {status === 'connected' && files.length > 0 && !receiveMode && (
         <Button 
           onClick={sendFiles} 
-          className="w-full p-6 text-3xl font-comic font-bold bg-chaos-neon3 hover:bg-chaos-neon3/80 text-black animate-wiggle chaotic-shadow"
+          className="w-full p-6 text-2xl font-comic font-bold bg-gradient-to-r from-emerald-500 to-indigo-600 hover:from-emerald-600 hover:to-indigo-700 text-white animate-wiggle shadow-neon"
         >
-          JUST TAKE IT!!!
+          <Zap className="mr-2 h-6 w-6" /> HYPER-SPEED TRANSFER!
         </Button>
       )}
 
-      <div className="p-4 border-2 border-chaos-ugly1 rounded-lg bg-white">
-        <h3 className="font-comic font-bold mb-2 text-chaos-ugly1">Status: {getStatusEmoji()}</h3>
+      <div className="p-4 border-2 border-amber-400 rounded-lg bg-white">
+        <h3 className="font-comic font-bold mb-2 text-amber-600">Status: {getStatusEmoji()}</h3>
         <p className="text-gray-600 italic">{status}</p>
       </div>
 
       {receivedFiles.length > 0 && (
-        <div className="border-2 border-chaos-neon3 rounded-lg p-4 bg-white">
-          <h3 className="font-comic font-bold mb-2 text-chaos-neon3">Received Files:</h3>
+        <div className="border-2 border-emerald-400 rounded-lg p-4 bg-white">
+          <h3 className="font-comic font-bold mb-2 text-emerald-600">Received Files:</h3>
           <ul className="space-y-2">
             {receivedFiles.map((file, index) => (
               <li key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded">
@@ -498,7 +507,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
                 <Button 
                   onClick={() => downloadFile(index)}
                   variant="outline"
-                  className="border-chaos-neon3 text-chaos-neon3"
+                  className="border-emerald-400 text-emerald-600 hover:bg-emerald-50"
                 >
                   Download
                 </Button>
@@ -511,7 +520,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
       <Button 
         onClick={onReset} 
         variant="outline" 
-        className="w-full border-chaos-error text-chaos-error hover:bg-chaos-error/10"
+        className="w-full border-red-400 text-red-500 hover:bg-red-50"
       >
         Reset & Start Over
       </Button>
