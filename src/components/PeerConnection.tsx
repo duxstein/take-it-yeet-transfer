@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -28,9 +29,13 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
   const [status, setStatus] = useState<string>("initializing");
   const [receivedFiles, setReceivedFiles] = useState<{name: string, data: ArrayBuffer, type: string}[]>([]);
   const [showQrCode, setShowQrCode] = useState<boolean>(false);
+  const [connectionAttempted, setConnectionAttempted] = useState<boolean>(false);
   
   // Initialize peer connection
   useEffect(() => {
+    console.log("Initializing PeerConnection with initialConnectionId:", initialConnectionId);
+    console.log("Receive mode:", receiveMode);
+    
     const newPeer = new Peer();
     
     newPeer.on('open', (id) => {
@@ -42,14 +47,10 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
       if (Math.random() > 0.7) {
         setStatus(getRandomMessage(statusMessages));
       }
-      
-      // If in receive mode and we have an initial connection ID, connect automatically
-      if (receiveMode && initialConnectionId && id) {
-        connectToPeer(initialConnectionId);
-      }
     });
     
     newPeer.on('connection', (conn) => {
+      console.log("Incoming connection from:", conn.peer);
       setConnection(conn);
       setStatus("connected");
       toast({
@@ -76,7 +77,16 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
     return () => {
       newPeer.destroy();
     };
-  }, [initialConnectionId, receiveMode]);
+  }, []);
+  
+  // Auto-connect when in receive mode and we have an initialConnectionId
+  useEffect(() => {
+    if (receiveMode && initialConnectionId && peer && peer.id && !connectionAttempted) {
+      console.log("Auto-connecting to:", initialConnectionId);
+      connectToPeer(initialConnectionId);
+      setConnectionAttempted(true);
+    }
+  }, [receiveMode, initialConnectionId, peer, peer?.id, connectionAttempted]);
   
   const setupConnectionHandlers = (conn: DataConnection) => {
     conn.on('data', (data: any) => {
@@ -131,7 +141,11 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
   };
   
   const connectToPeer = (idToConnect = remotePeerId) => {
-    if (!peer || !idToConnect) return;
+    console.log("Attempting to connect to peer:", idToConnect);
+    if (!peer || !idToConnect) {
+      console.log("Cannot connect: peer or idToConnect is missing");
+      return;
+    }
     
     // Random chance for fake connection error
     if (Math.random() > 0.9) {
@@ -145,6 +159,7 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
     }
     
     try {
+      console.log("Creating connection to:", idToConnect);
       const conn = peer.connect(idToConnect);
       setConnection(conn);
       setStatus("connecting");
@@ -421,6 +436,18 @@ const PeerConnection: React.FC<PeerConnectionProps> = ({
           <div className="animate-pulse p-6 text-center">
             <p className="text-xl font-comic font-bold text-chaos-neon1">Waiting for connection...</p>
             <p className="text-gray-500 mt-2">{getStatusEmoji()}</p>
+            <Button 
+              onClick={() => {
+                if (initialConnectionId) {
+                  console.log("Manual reconnect to:", initialConnectionId);
+                  connectToPeer(initialConnectionId);
+                }
+              }}
+              className="mt-4 bg-chaos-neon1 hover:bg-chaos-neon1/80"
+              disabled={!initialConnectionId}
+            >
+              Retry Connection
+            </Button>
           </div>
         </div>
       )}
